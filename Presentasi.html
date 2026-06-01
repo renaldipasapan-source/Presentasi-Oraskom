@@ -1,0 +1,843 @@
+<!doctype html>
+<html lang="id">
+ <head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>Simulator Cache Presentation</title>
+  <script src="https://cdn.tailwindcss.com/3.4.17"></script>
+  <link href="https://fonts.googleapis.com/css2?family=DM+Sans:wght@400;500;700&amp;family=Playfair+Display:wght@700;900&amp;family=Space+Mono:wght@400;700&amp;display=swap" rel="stylesheet">
+  <script src="https://cdn.jsdelivr.net/npm/lucide@0.263.0/dist/umd/lucide.min.js"></script>
+  <style>
+    :root{--vh:1vh}
+    body{font-family:'DM Sans',sans-serif;margin:0;min-height:100vh;color:#eef2f7;background:radial-gradient(circle at top left, rgba(56,189,248,0.14), transparent 32%),radial-gradient(circle at bottom right, rgba(236,72,153,0.12), transparent 30%),#09070b;overflow-x:hidden;scroll-behavior:smooth}
+    .heading-font{font-family:'Playfair Display',serif;background:linear-gradient(135deg,#a78bfa,#38bdf8,#ec4899);-webkit-background-clip:text;-webkit-text-fill-color:transparent;background-clip:text}
+    .mono-font{font-family:'Space Mono',monospace}
+    .section-full{min-height:calc(100 * min(var(--vh,1vh),1vh));width:100%;position:relative;overflow:hidden}
+    .glass{background:rgba(15,10,30,0.4);-webkit-backdrop-filter:blur(18px);backdrop-filter:blur(18px);border:1px solid rgba(167,139,250,0.25);border-radius:16px;transition:all 0.3s cubic-bezier(0.34,1.56,0.64,1);box-shadow:inset 0 1px 0 rgba(255,255,255,0.1),0 8px 32px rgba(15,10,30,0.4)}
+    .glass:hover{background:rgba(15,10,30,0.5);border-color:rgba(167,139,250,0.4);box-shadow:inset 0 1px 0 rgba(255,255,255,0.15),0 12px 48px rgba(167,139,250,0.15)}
+    .glass-strong{background:rgba(139,92,246,0.12);-webkit-backdrop-filter:blur(20px);backdrop-filter:blur(20px);border:1px solid rgba(167,139,250,0.35);border-radius:20px;transition:all 0.3s cubic-bezier(0.34,1.56,0.64,1);box-shadow:inset 0 1px 0 rgba(255,255,255,0.12),0 24px 60px rgba(139,92,246,0.12)}
+    .glass-strong:hover{background:rgba(139,92,246,0.16);border-color:rgba(167,139,250,0.5);box-shadow:inset 0 1px 0 rgba(255,255,255,0.15),0 32px 80px rgba(139,92,246,0.18)}
+    .grid-bg{background-image:radial-gradient(ellipse at 20% 50%,rgba(139,92,246,0.06) 0%,transparent 45%),radial-gradient(ellipse at 80% 20%,rgba(56,189,248,0.05) 0%,transparent 36%),radial-gradient(ellipse at 60% 80%,rgba(236,72,153,0.04) 0%,transparent 40%),linear-gradient(rgba(139,92,246,0.02) 1px,transparent 1px),linear-gradient(90deg,rgba(139,92,246,0.02) 1px,transparent 1px);background-size:100% 100%,100% 100%,100% 100%,50px 50px,50px 50px;animation:bgShift 15s ease-in-out infinite}
+    table{border-collapse:collapse;width:100%;border-spacing:0}
+    table th,table td{border:1px solid rgba(139,92,246,0.25);padding:10px 14px;text-align:left;transition:all 0.3s ease}
+    table th{background:linear-gradient(135deg,rgba(139,92,246,0.28),rgba(56,189,248,0.12));font-weight:700;font-size:0.9rem;letter-spacing:0.05em}
+    table tr:hover td{background:rgba(139,92,246,0.12);border-color:rgba(167,139,250,0.4)}
+    .reveal{opacity:0;transform:translateY(30px);transition:opacity 0.8s cubic-bezier(0.34,1.56,0.64,1),transform 0.8s cubic-bezier(0.34,1.56,0.64,1)}
+    .reveal.visible{opacity:1;transform:translateY(0)}
+    .reveal-delay-1{transition-delay:0.1s}.reveal-delay-2{transition-delay:0.2s}.reveal-delay-3{transition-delay:0.3s}.reveal-delay-4{transition-delay:0.4s}
+    .nav-container{position:fixed;top:50%;right:20px;transform:translateY(-50%);z-index:50;display:flex;flex-direction:column;align-items:center;gap:12px;padding:14px;background:rgba(15,10,30,0.9);-webkit-backdrop-filter:blur(16px);backdrop-filter:blur(16px);border:1px solid rgba(167,139,250,0.3);border-radius:32px;box-shadow:0 22px 50px rgba(15,10,30,0.4),inset 0 1px 0 rgba(167,139,250,0.2);transition:all 0.3s ease}
+    .nav-container::before{content:'';position:absolute;inset:1px;border-radius:32px;background:linear-gradient(135deg,rgba(167,139,250,0.1),transparent);pointer-events:none}
+    .nav-item{position:relative;display:flex;align-items:center;justify-content:center;width:14px;height:14px;cursor:pointer;border-radius:999px;background:rgba(255,255,255,0.15);transition:all 0.25s cubic-bezier(0.34,1.56,0.64,1);box-shadow:0 4px 12px rgba(15,10,30,0.3)}
+    .nav-item:hover{transform:scale(1.25);background:rgba(167,139,250,0.35);box-shadow:0 6px 20px rgba(167,139,250,0.3),inset 0 1px 0 rgba(255,255,255,0.2)}
+    .nav-item span.nav-label{position:absolute;right:calc(100% + 10px);top:50%;transform:translateY(-50%);opacity:0;visibility:hidden;pointer-events:none;padding:8px 12px;border-radius:999px;background:rgba(15,10,30,0.95);border:1px solid rgba(167,139,250,0.3);color:#eef2f7;font-size:0.72rem;white-space:nowrap;transition:opacity 0.3s cubic-bezier(0.34,1.56,0.64,1),visibility 0.3s cubic-bezier(0.34,1.56,0.64,1);z-index:60;font-weight:500;letter-spacing:0.05em;box-shadow:0 8px 24px rgba(15,10,30,0.5),inset 0 1px 0 rgba(167,139,250,0.2)}
+    .nav-item:hover span.nav-label{opacity:1;visibility:visible}
+    .nav-dot{display:none}
+    .nav-item.active{width:20px;height:20px;background:linear-gradient(135deg,#a78bfa,#38bdf8);box-shadow:0 0 20px rgba(167,139,250,0.8),0 0 40px rgba(56,189,248,0.5),inset 0 1px 0 rgba(255,255,255,0.3);animation:navPulse 2s ease-in-out infinite}
+    @keyframes navPulse{0%,100%{box-shadow:0 0 20px rgba(167,139,250,0.8),0 0 40px rgba(56,189,248,0.5),inset 0 1px 0 rgba(255,255,255,0.3)}50%{box-shadow:0 0 30px rgba(167,139,250,1),0 0 60px rgba(56,189,248,0.7),inset 0 1px 0 rgba(255,255,255,0.4)}}
+    .section-badge{display:inline-flex;align-items:center;gap:10px;padding:10px 18px;border-radius:999px;background:linear-gradient(135deg,rgba(139,92,246,0.2),rgba(56,189,248,0.1));border:1px solid rgba(167,139,250,0.35);font-size:0.8rem;letter-spacing:0.23em;text-transform:uppercase;transition:all 0.3s ease;font-weight:600;box-shadow:0 4px 12px rgba(139,92,246,0.15)}
+    .section-badge:hover{background:linear-gradient(135deg,rgba(139,92,246,0.3),rgba(56,189,248,0.2));border-color:rgba(167,139,250,0.5);box-shadow:0 6px 20px rgba(139,92,246,0.25)}
+    .hero-card{background:linear-gradient(135deg,rgba(15,10,30,0.7),rgba(139,92,246,0.1));border:1px solid rgba(167,139,250,0.25);border-radius:32px;box-shadow:0 30px 70px rgba(15,10,30,0.28),inset 0 1px 0 rgba(255,255,255,0.1);padding:3rem 2rem;-webkit-backdrop-filter:blur(24px);backdrop-filter:blur(24px);max-width:960px;margin:0 auto;transition:all 0.4s cubic-bezier(0.34,1.56,0.64,1);position:relative;overflow:hidden}
+    .hero-card::before{content:'';position:absolute;inset:0;background:linear-gradient(135deg,rgba(167,139,250,0.1),transparent);pointer-events:none;border-radius:32px}
+    .hero-card:hover{background:linear-gradient(135deg,rgba(15,10,30,0.75),rgba(139,92,246,0.15));border-color:rgba(167,139,250,0.35);box-shadow:0 40px 90px rgba(139,92,246,0.15),inset 0 1px 0 rgba(255,255,255,0.15)}
+    .hero-card h1{font-size:2rem;line-height:1.1;letter-spacing:0.02em;font-weight:900;background:linear-gradient(135deg,#eef2f7,#cbd5e1);-webkit-background-clip:text;-webkit-text-fill-color:transparent;background-clip:text}
+    .hero-card p{opacity:0.85;transition:opacity 0.3s ease}
+    .hero-card:hover p{opacity:0.95}    .section-panel{background:linear-gradient(135deg,rgba(15,10,30,0.65),rgba(139,92,246,0.08));border:1px solid rgba(167,139,250,0.2);border-radius:28px;box-shadow:0 24px 52px rgba(15,10,30,0.22),inset 0 1px 0 rgba(255,255,255,0.08);padding:2rem;transition:all 0.3s cubic-bezier(0.34,1.56,0.64,1);position:relative;overflow:hidden}
+    .section-panel::before{content:'';position:absolute;inset:1px;border-radius:28px;background:linear-gradient(135deg,rgba(167,139,250,0.08),transparent);pointer-events:none}
+    .section-panel:hover{background:linear-gradient(135deg,rgba(15,10,30,0.7),rgba(139,92,246,0.12));border-color:rgba(167,139,250,0.35);box-shadow:0 32px 70px rgba(139,92,246,0.12),inset 0 1px 0 rgba(255,255,255,0.12)}
+    .section-panel h2{margin-bottom:1rem;background:linear-gradient(135deg,#eef2f7,#cbd5e1);-webkit-background-clip:text;-webkit-text-fill-color:transparent;background-clip:text;font-weight:700}
+    .section-row{display:grid;grid-template-columns:1fr;gap:2rem}
+    .section-row-2{display:grid;grid-template-columns:1.2fr .9fr;gap:2rem;}
+    .section-row-3{display:grid;grid-template-columns:1fr 1fr;gap:2rem;}
+    .section-row-responsive{display:grid;grid-template-columns:1fr;gap:1.5rem}
+    .panel-card{background:linear-gradient(135deg,rgba(15,10,30,0.6),rgba(139,92,246,0.08));border:1.5px solid rgba(167,139,250,0.22);border-radius:26px;padding:1.8rem;min-height:260px;position:relative;overflow:hidden;transition:all 0.4s cubic-bezier(0.34,1.56,0.64,1);box-shadow:0 8px 24px rgba(15,10,30,0.25),inset 0 1px 0 rgba(255,255,255,0.08)}
+    .panel-card::before{content:'';position:absolute;inset:0;background:linear-gradient(135deg,rgba(167,139,250,0.08),transparent 35%,rgba(56,189,248,0.06));pointer-events:none;border-radius:26px;opacity:0.6;transition:opacity 0.3s ease}
+    .panel-card:hover{background:linear-gradient(135deg,rgba(15,10,30,0.65),rgba(139,92,246,0.12));border-color:rgba(167,139,250,0.35);box-shadow:0 12px 36px rgba(139,92,246,0.15),inset 0 1px 0 rgba(255,255,255,0.12);transform:translateY(-4px)}
+    .panel-card:hover::before{opacity:0.8}
+    .label-badge{display:inline-flex;align-items:center;gap:8px;padding:8px 16px;border-radius:999px;background:linear-gradient(135deg,rgba(139,92,246,0.18),rgba(56,189,248,0.08));border:1px solid rgba(167,139,250,0.28);font-size:0.78rem;text-transform:uppercase;letter-spacing:0.18em;font-weight:600;transition:all 0.3s ease;box-shadow:0 4px 12px rgba(139,92,246,0.1)}
+    .label-badge:hover{background:linear-gradient(135deg,rgba(139,92,246,0.25),rgba(56,189,248,0.12));border-color:rgba(167,139,250,0.4);box-shadow:0 6px 18px rgba(139,92,246,0.18)}
+    .section-subtitle{color:#cbd5e1;opacity:0.85;letter-spacing:0.08em;text-transform:uppercase;font-size:0.8rem;margin-bottom:1.2rem;font-weight:600}
+    .page-footer{letter-spacing:0.2em;opacity:0.4;text-transform:uppercase;font-size:0.75rem;transition:opacity 0.3s ease;font-weight:500}
+    .page-footer:hover{opacity:0.6}
+    @media(min-width:768px){.section-row{grid-template-columns:1fr 1fr}.section-row-2{grid-template-columns:1.1fr .9fr}.section-row-3{grid-template-columns:repeat(3,1fr)}}
+    .divider-line{width:2px;height:24px;margin:12px auto;background:linear-gradient(180deg,transparent,rgba(167,139,250,0.7),transparent);position:relative;animation:shimmer 2s infinite}
+    .divider-line::after{content:'↓';position:absolute;left:50%;top:50%;transform:translate(-50%,-50%);color:#a78bfa;font-size:12px;animation:float 2s ease-in-out infinite}
+    .left-10p{left:10%}
+    .delay-2{animation-delay:-2s}
+    .delay-3{animation-delay:-3s}
+    .delay-4{animation-delay:-4s}
+    .delay-5{animation-delay:-5s}
+    .delay-6{animation-delay:-6s}
+    .delay-7{animation-delay:-7s}
+    .delay-8{animation-delay:-8s}
+    .delay-9{animation-delay:-9s}
+    .orb-opacity-25{opacity:0.25}
+    .orb-blur-100{filter:blur(100px)}
+    .icon-default{width:16px;height:16px;color:#a78bfa;filter:drop-shadow(0 0 8px rgba(167,139,250,0.4));transition:all 0.3s ease}
+    .icon-cyan{width:16px;height:16px;color:#38bdf8;filter:drop-shadow(0 0 8px rgba(56,189,248,0.4));transition:all 0.3s ease}
+    .icon-check-blue{width:20px;height:20px;color:#38bdf8;flex-shrink:0;filter:drop-shadow(0 0 8px rgba(56,189,248,0.4))}
+    .icon-refresh-green{width:20px;height:20px;color:#34d399;flex-shrink:0;filter:drop-shadow(0 0 8px rgba(52,211,153,0.4))}
+    .icon-alert-red{width:20px;height:20px;color:#f87171;flex-shrink:0;filter:drop-shadow(0 0 8px rgba(248,113,113,0.4))}
+    .icon-circle-purple{width:36px;height:36px;color:#a78bfa;margin-bottom:12px;filter:drop-shadow(0 0 12px rgba(167,139,250,0.4));animation:iconPulse 2s ease-in-out infinite}
+    .icon-circle-cyan{width:36px;height:36px;color:#38bdf8;margin-bottom:12px;filter:drop-shadow(0 0 12px rgba(56,189,248,0.4));animation:iconPulse 2s ease-in-out infinite}
+    .icon-circle-pink{width:36px;height:36px;color:#ec4899;margin-bottom:12px;filter:drop-shadow(0 0 12px rgba(236,72,153,0.4));animation:iconPulse 2s ease-in-out infinite}
+    @keyframes iconPulse{0%,100%{transform:scale(1)}50%{transform:scale(1.08)}}
+    .code-display-pre{margin:0;white-space:pre;overflow-x:auto;font-size:0.94rem;line-height:1.5}
+    .section-badge{font-size:0.7rem;letter-spacing:0.22em;text-transform:uppercase}
+    .glass, .glass-strong{box-shadow:0 24px 70px rgba(15,23,42,0.18)}
+    .section-full::before{content:'';position:absolute;inset:0;background:linear-gradient(180deg,rgba(15,10,30,0.0),rgba(15,10,30,0.12));pointer-events:none}
+    @media(max-width:767px){
+      .nav-container{right:8px;top:auto;bottom:12px;transform:none;flex-direction:row;gap:6px;padding:8px 12px;border-radius:20px}
+    }
+    .glow-line{height:2px;background:linear-gradient(90deg,transparent,#a78bfa,#38bdf8,#ec4899,transparent);animation:shimmer 3s infinite;box-shadow:0 0 20px rgba(167,139,250,0.5)}
+    @keyframes shimmer{0%,100%{opacity:0.6}50%{opacity:1}}
+    @keyframes bgShift{0%,100%{background-position:0% 0%}50%{background-position:10% 10%}}
+    @keyframes float{0%,100%{transform:translateY(0px)}50%{transform:translateY(-8px)}}
+    .float-particle{position:absolute;width:4px;height:4px;background:rgba(167,139,250,0.4);border-radius:50%;animation:floatUp 8s infinite ease-in-out;box-shadow:0 0 12px rgba(167,139,250,0.6)}
+    .float-particle:nth-child(2){left:20%;animation-delay:2s;width:3px;height:3px;background:rgba(56,189,248,0.5);box-shadow:0 0 12px rgba(56,189,248,0.6)}
+    .float-particle:nth-child(3){left:60%;animation-delay:4s;width:5px;height:5px;background:rgba(56,189,248,0.4);box-shadow:0 0 12px rgba(56,189,248,0.5)}
+    .float-particle:nth-child(4){left:80%;animation-delay:1s;background:rgba(236,72,153,0.4);box-shadow:0 0 12px rgba(236,72,153,0.5)}
+    .float-particle:nth-child(5){left:40%;animation-delay:5s;background:rgba(167,139,250,0.5);box-shadow:0 0 12px rgba(167,139,250,0.6)}
+    .float-particle:nth-child(6){left:50%;animation-delay:3s;background:rgba(56,189,248,0.5);box-shadow:0 0 12px rgba(56,189,248,0.6)}
+    @keyframes floatUp{0%{transform:translateY(100vh) scale(0);opacity:0}20%{opacity:1}100%{transform:translateY(-20vh) scale(1.5);opacity:0}}
+    .gradient-border{position:relative}
+    .gradient-border::before{content:'';position:absolute;inset:-1.5px;border-radius:20px;padding:1.5px;background:linear-gradient(135deg,#a78bfa,#38bdf8,#ec4899);-webkit-mask:linear-gradient(#fff 0 0) content-box,linear-gradient(#fff 0 0);mask:linear-gradient(#fff 0 0) content-box,linear-gradient(#fff 0 0);-webkit-mask-composite:xor;mask-composite:exclude;opacity:0.6;transition:opacity 0.3s ease}
+    .gradient-border:hover::before{opacity:0.9}
+    .section-badge{display:inline-flex;align-items:center;gap:8px;padding:6px 16px;border-radius:999px;background:rgba(139,92,246,0.15);border:1px solid rgba(167,139,250,0.3)}
+    .code-block{background:linear-gradient(135deg,rgba(0,0,0,0.6),rgba(139,92,246,0.05));border:1px solid rgba(139,92,246,0.4);border-radius:12px;overflow-x:auto;padding:1rem;font-size:10px;line-height:1.4;color:#e2e8f0;box-shadow:inset 0 1px 0 rgba(255,255,255,0.08),0 8px 24px rgba(15,10,30,0.3);transition:all 0.3s ease;position:relative}
+    .code-block::before{content:'';position:absolute;inset:1px;border-radius:12px;background:linear-gradient(135deg,rgba(167,139,250,0.08),transparent);pointer-events:none}
+    .code-block:hover{background:linear-gradient(135deg,rgba(0,0,0,0.7),rgba(139,92,246,0.08));border-color:rgba(167,139,250,0.5);box-shadow:inset 0 1px 0 rgba(255,255,255,0.1),0 12px 32px rgba(139,92,246,0.2)}
+    @media(min-width:768px){.code-block{font-size:11px;padding:1.5rem}}
+    .code-block .directive{color:#a78bfa}.code-block .label{color:#38bdf8}.code-block .instruction{color:#f9a8d4}.code-block .register{color:#34d399}.code-block .number{color:#fbbf24}.code-block .string{color:#fb923c}
+    .flow-box-refined{background:linear-gradient(135deg,rgba(139,92,246,0.12),rgba(56,189,248,0.05));border:2px solid rgba(167,139,250,0.35);border-radius:12px;padding:10px 16px;text-align:center;transition:all 0.3s cubic-bezier(0.34,1.56,0.64,1);font-weight:600;font-size:0.85rem;box-shadow:0 6px 18px rgba(139,92,246,0.12),inset 0 1px 0 rgba(255,255,255,0.08);position:relative;overflow:hidden}
+    .flow-box-refined::before{content:'';position:absolute;inset:0;background:linear-gradient(90deg,transparent,rgba(255,255,255,0.05),transparent);transform:translateX(-100%);transition:transform 0.6s ease}
+    .flow-box-refined:hover{background:linear-gradient(135deg,rgba(139,92,246,0.18),rgba(56,189,248,0.1));border-color:rgba(167,139,250,0.5);transform:scale(1.03);box-shadow:0 8px 28px rgba(139,92,246,0.18),inset 0 1px 0 rgba(255,255,255,0.1)}
+    .flow-box-refined:hover::before{transform:translateX(100%)}
+    .flow-box-refined.hit{background:linear-gradient(135deg,rgba(34,197,94,0.12),rgba(34,197,94,0.05));border-color:rgba(34,197,94,0.6);box-shadow:0 6px 18px rgba(34,197,94,0.2),inset 0 1px 0 rgba(255,255,255,0.08)}
+    .flow-box-refined.hit:hover{background:linear-gradient(135deg,rgba(34,197,94,0.18),rgba(34,197,94,0.1));border-color:rgba(34,197,94,0.8);box-shadow:0 8px 28px rgba(34,197,94,0.3),inset 0 1px 0 rgba(255,255,255,0.1)}
+    .flow-box-refined.miss{background:linear-gradient(135deg,rgba(239,68,68,0.12),rgba(239,68,68,0.05));border-color:rgba(239,68,68,0.6);box-shadow:0 6px 18px rgba(239,68,68,0.2),inset 0 1px 0 rgba(255,255,255,0.08)}
+    .flow-box-refined.miss:hover{background:linear-gradient(135deg,rgba(239,68,68,0.18),rgba(239,68,68,0.1));border-color:rgba(239,68,68,0.8);box-shadow:0 8px 28px rgba(239,68,68,0.3),inset 0 1px 0 rgba(255,255,255,0.1)}
+    .card-accent{position:relative;overflow:hidden}
+    .card-accent::before{content:'';position:absolute;top:0;left:0;right:0;height:1px;background:linear-gradient(90deg,transparent,rgba(167,139,250,0.6),transparent)}
+    .hero-card-accent{background:linear-gradient(135deg,rgba(139,92,246,0.08),transparent);position:relative}
+    .hero-card-luxury{background:linear-gradient(135deg,rgba(139,92,246,0.18),rgba(56,189,248,0.08));-webkit-backdrop-filter:blur(24px);backdrop-filter:blur(24px);border:1px solid rgba(167,139,250,0.4);box-shadow:0 32px 80px rgba(139,92,246,0.2),inset 0 1px 0 rgba(255,255,255,0.15)}
+    .orb{position:absolute;border-radius:50%;filter:blur(60px);opacity:0.35;animation:orbFloat 12s ease-in-out infinite}
+    @keyframes orbFloat{0%,100%{transform:translate(0,0) scale(1)}33%{transform:translate(30px,-20px) scale(1.1)}66%{transform:translate(-20px,20px) scale(0.9)}}
+  </style>
+  <script src="/_sdk/data_sdk.js" type="text/javascript"></script>
+  <script src="/_sdk/resizing_sdk.js" type="text/javascript"></script>
+ </head>
+ <body data-template-id="__page-root" class="w-full overflow-x-hidden">
+  <div class="fixed inset-0 pointer-events-none z-0 overflow-hidden">
+   <div class="float-particle left-10p"></div>
+   <div class="float-particle"></div>
+   <div class="float-particle"></div>
+   <div class="float-particle"></div>
+   <div class="float-particle"></div>
+   <div class="float-particle"></div>
+  </div><!-- Section 1: Cover -->
+  <section class="section-full flex flex-col items-center justify-center relative grid-bg px-4" id="section-1">
+    <div class="orb w-40 md:w-64 h-40 md:h-64 bg-purple-600 top-10 left-10 opacity-12"></div>
+   <div class="orb w-32 md:w-48 h-32 md:h-48 bg-cyan-500 bottom-20 right-20 delay-4 opacity-8"></div>
+   <div class="relative z-10 text-center w-full max-w-4xl">
+    <h1 data-template-id="s1-title" class="canva-text uppercase tracking-wide mb-16 text-3xl md:text-5xl font-black reveal bg-gradient-to-r from-cyan-300 via-purple-400 to-pink-400 bg-clip-text text-transparent drop-shadow-lg"></h1>
+    <div class="px-8 md:px-14 py-12 md:py-16 reveal reveal-delay-1 rounded-2xl relative overflow-hidden hero-card-luxury"><div class="absolute inset-0 rounded-2xl border-2 border-transparent bg-gradient-to-r from-purple-500/30 via-cyan-500/20 to-pink-500/30 pointer-events-none"></div><div class="relative z-10">
+     <p data-template-id="s1-subtitle" class="canva-text uppercase tracking-widest mb-6 md:mb-8 opacity-60 text-xs md:text-sm leading-relaxed font-medium"></p>
+     <div class="w-16 h-px mx-auto bg-gradient-to-r from-transparent via-slate-400 to-transparent mb-6 md:mb-8 opacity-40"></div>
+     <p data-template-id="s1-team-heading" class="canva-text italic font-medium mb-5 md:mb-6 text-xs md:text-sm opacity-65"></p>
+     <div class="space-y-1">
+      <p data-template-id="s1-member1" class="canva-text text-xs md:text-sm opacity-70"></p>
+      <p data-template-id="s1-member2" class="canva-text text-xs md:text-sm opacity-70"></p>
+      <p data-template-id="s1-member3" class="canva-text text-xs md:text-sm opacity-70"></p>
+      <p data-template-id="s1-member4" class="canva-text text-xs md:text-sm opacity-70"></p>
+      <p data-template-id="s1-member5" class="canva-text text-xs md:text-sm opacity-70"></p>
+      <p data-template-id="s1-member6" class="canva-text text-xs md:text-sm opacity-70"></p>
+     </div>
+    </div>
+    </div>
+   </div>
+   <p data-template-id="s1-footer" class="canva-text absolute bottom-4 right-6 text-xs opacity-40 hidden md:block"></p>
+  </section><!-- Section 2: Source Code -->
+  <section class="section-full flex flex-col relative grid-bg" id="section-2">
+   <div class="glow-line absolute top-0 left-0 w-full"></div>
+   <div class="relative z-10 px-4 md:px-8 py-12 md:py-16 max-w-6xl mx-auto w-full">
+    <div class="section-badge mb-8 reveal">
+     <i data-lucide="code-2" class="icon-default"></i> <span data-template-id="s2-section-label" class="canva-text uppercase tracking-widest text-sm font-bold">Kode Sumber MIPS</span>
+    </div>
+    <h2 data-template-id="s2-title" class="canva-text heading-font font-bold mb-10 md:mb-12 reveal reveal-delay-1 text-2xl md:text-3xl">Contoh Kode MIPS Cache</h2>
+    <div class="reveal reveal-delay-2">
+     <div class="code-block mono-font" id="code-display"></div>
+    </div>
+   </div>
+   <p data-template-id="s2-footer" class="canva-text absolute bottom-4 right-6 text-xs opacity-40 hidden md:block">Referensi sintaks MIPS untuk simulasi cache</p>
+  </section><!-- Section 3: Latar Belakang & Tujuan -->
+  <section class="section-full flex flex-col relative grid-bg" id="section-3">
+   <div class="glow-line absolute top-0 left-0 w-full"></div>
+   <div class="orb w-40 h-40 bg-pink-500 top-20 right-10 delay-2"></div>
+   <div class="relative z-10 px-4 md:px-8 py-12 md:py-16 max-w-6xl mx-auto w-full">
+    <div class="section-badge mb-8 reveal">
+     <i data-lucide="cpu" class="icon-default"></i> <span data-template-id="s3-section-label" class="canva-text uppercase tracking-widest text-sm font-bold"></span>
+    </div>
+    <div class="glass p-6 md:p-10 mb-8 reveal reveal-delay-1 card-accent">
+     <h2 data-template-id="s3-heading1" class="canva-text font-bold mb-4 text-lg md:text-xl">Mengapa Cache Penting?</h2>
+     <p data-template-id="s3-para1" class="canva-text text-base md:text-lg opacity-85 leading-relaxed">Cache mempercepat akses memori dengan menyimpan data yang sering diakses lebih dekat ke CPU, sehingga mengurangi waktu tunggu instruksi.</p>
+    </div>
+    <div class="glass p-6 md:p-10 mb-8 reveal reveal-delay-2 card-accent">
+     <h2 data-template-id="s3-heading2" class="canva-text font-bold mb-6 text-lg md:text-xl">Tujuan Presentasi</h2>
+     <ul class="list-disc list-inside space-y-3 opacity-85 text-base md:text-lg">
+      <li data-template-id="s3-q1" class="canva-text">Menjelaskan konsep cache memory</li>
+      <li data-template-id="s3-q2" class="canva-text">Memahami struktur direct-mapped cache</li>
+      <li data-template-id="s3-q3" class="canva-text">Mengukur hit rate dan miss rate</li>
+      <li data-template-id="s3-q4" class="canva-text">Menunjukkan pembagian alamat memori</li>
+      <li data-template-id="s3-q5" class="canva-text">Membandingkan tag, index, dan offset</li>
+      <li data-template-id="s3-q6" class="canva-text">Menjelaskan logika hit dan miss</li>
+     </ul>
+    </div>
+    <div class="glass p-6 md:p-10 reveal reveal-delay-3 card-accent">
+     <h2 data-template-id="s3-heading3" class="canva-text font-bold mb-6 text-lg md:text-xl">Manfaat Cache</h2>
+     <ul class="list-disc list-inside space-y-3 opacity-85 text-base md:text-lg">
+      <li data-template-id="s3-t1" class="canva-text">Mengurangi waktu akses ke data</li>
+      <li data-template-id="s3-t2" class="canva-text">Meningkatkan performa sistem</li>
+      <li data-template-id="s3-t3" class="canva-text">Meminimalkan beban memori utama</li>
+      <li data-template-id="s3-t4" class="canva-text">Mendukung eksekusi instruksi lebih cepat</li>
+     </ul>
+    </div>
+   </div>
+   <p data-template-id="s3-footer" class="canva-text absolute bottom-4 right-6 text-xs opacity-40 hidden md:block">Ringkasan latar belakang dan tujuan</p>
+  </section><!-- Section 4: Konfigurasi Cache -->
+  <section class="section-full flex flex-col relative grid-bg" id="section-4">
+   <div class="orb w-48 md:w-72 h-48 md:h-72 bg-yellow-500/40 bottom-0 right-0 delay-7 orb-opacity-25 orb-blur-100"></div>
+   <div class="relative z-10 px-4 md:px-8 py-12 md:py-16 max-w-6xl mx-auto w-full">
+    <div class="section-badge mb-8 reveal">
+     <i data-lucide="database" class="icon-default"></i> <span data-template-id="s4-section-label" class="canva-text uppercase tracking-widest text-sm font-bold">Konfigurasi Cache</span>
+    </div>
+    <h2 data-template-id="s4-title" class="canva-text heading-font font-bold mb-12 md:mb-16 reveal reveal-delay-1 text-2xl md:text-3xl">Detail Struktur Cache</h2>
+    <div class="grid md:grid-cols-2 gap-8 md:gap-14 items-start mb-12 md:mb-16">
+     <div class="reveal reveal-delay-2">
+      <h3 data-template-id="s4-spec-heading" class="canva-text font-bold mb-6 md:mb-8 text-base md:text-lg uppercase tracking-wide">Spesifikasi Cache</h3>
+      <div class="glass p-6 md:p-10 gradient-border card-accent">
+       <table class="text-sm md:text-base w-full">
+        <tbody>
+         <tr>
+          <td data-template-id="s4-r1c1" class="canva-text py-3 md:py-4 font-semibold">Ukuran blok</td>
+          <td data-template-id="s4-r1c2" class="canva-text py-3 md:py-4 text-right">4 byte</td>
+         </tr>
+         <tr>
+          <td data-template-id="s4-r2c1" class="canva-text py-3 md:py-4">Jumlah baris</td>
+          <td data-template-id="s4-r2c2" class="canva-text py-3 md:py-4 text-right">8 baris</td>
+         </tr>
+         <tr>
+          <td data-template-id="s4-r3c1" class="canva-text py-3 md:py-4">Set associativity</td>
+          <td data-template-id="s4-r3c2" class="canva-text py-3 md:py-4 text-right">Direct-mapped</td>
+         </tr>
+         <tr>
+          <td data-template-id="s4-r4c1" class="canva-text py-3 md:py-4">Valid bit</td>
+          <td data-template-id="s4-r4c2" class="canva-text py-3 md:py-4 text-right">1 bit per baris</td>
+         </tr>
+         <tr>
+          <td data-template-id="s4-r5c1" class="canva-text py-3 md:py-4">Tag width</td>
+          <td data-template-id="s4-r5c2" class="canva-text py-3 md:py-4 text-right">5 bit</td>
+         </tr>
+        </tbody>
+       </table>
+      </div>
+     </div>
+     <div class="reveal reveal-delay-3 flex flex-col">
+      <h3 data-template-id="s4-line-structure-title" class="canva-text font-bold mb-6 md:mb-8 text-base md:text-lg uppercase tracking-wide">STRUKTUR CHACE</h3>
+      <div class="glass p-6 md:p-10 gradient-border card-accent">
+       <table class="text-sm md:text-base w-full">
+        <tbody>
+          <h3 data-template-id="s4-line-structure-heading" class="canva-text font-bold mb-4 text-base md:text-lg">Setiap line Menyimpan :</h3>
+         <tr>
+          <td data-template-id="s4-line-item1-label" class="canva-text py-4 md:py-4 font-semibold">a. Valid Bit</td>
+  
+         </tr>
+         <tr>
+          <td data-template-id="s4-line-item2-label" class="canva-text py-3 md:py-4">b. Tag</td>
+         </tr>
+        </tbody>
+       </table>
+      </div>
+     </div>
+    </div>
+    <div class="glass p-6 md:p-10 reveal reveal-delay-4 card-accent">
+     <h3 data-template-id="s4-penjelasan-heading" class="canva-text font-bold mb-4 text-base md:text-lg">Penjelasan Cache</h3>
+     <p data-template-id="s4-penjelasan-text" class="canva-text text-base md:text-lg opacity-85 leading-relaxed">Alamat memori dibagi menjadi tag, index, dan offset untuk mencari data di cache. Setiap baris cache menyimpan tag dan valid bit untuk mengecek kecocokan.</p>
+    </div>
+   </div>
+   <p data-template-id="s4-footer" class="canva-text absolute bottom-4 right-6 text-xs opacity-40 hidden md:block">Konfigurasi cache direct-mapped</p>
+  </section><!-- Section 5: Arsitektur Direct-Mapped Cache -->
+  <section class="section-full flex flex-col relative grid-bg" id="section-5">
+   <div class="glow-line absolute top-0 left-0 w-full"></div>
+   <div class="orb w-40 md:w-56 h-40 md:h-56 bg-blue-600 bottom-10 left-20 delay-6"></div>
+   <div class="relative z-10 px-4 md:px-8 py-12 md:py-16 max-w-5xl mx-auto w-full">
+    <div class="section-badge mb-8 reveal">
+     <i data-lucide="layers" class="icon-default"></i> <span data-template-id="s5-section-label" class="canva-text uppercase tracking-widest text-sm font-bold">Direct-Mapped Cache</span>
+    </div>
+    <h2 data-template-id="s5-title" class="canva-text heading-font font-bold mb-12 md:mb-16 reveal reveal-delay-1 text-2xl md:text-3xl">Arsitektur Direct-Mapped Cache</h2>
+    <div class="grid md:grid-cols-2 gap-6 md:gap-12">
+     <div class="glass p-5 md:p-8 reveal reveal-delay-2 card-accent">
+      <h3 data-template-id="s5-jawaban-heading" class="canva-text font-bold mb-4">Analisis Arsitektur</h3>
+      <p data-template-id="s5-jawaban-text" class="canva-text text-sm opacity-80 leading-relaxed mb-5">Direct-mapped cache menetapkan satu lokasi cache tunggal untuk setiap blok memori. Setiap alamat hanya bisa berada di satu baris cache.</p>
+      <p data-template-id="s5-address-struct" class="canva-text text-sm opacity-80 mb-3">Struktur alamat: [tag][index][offset]</p>
+      <div class="overflow-x-auto">
+       <table class="text-xs md:text-sm mb-6">
+        <tbody>
+         <tr>
+          <th data-template-id="s5-addr-th1" class="canva-text">Tag</th>
+          <th data-template-id="s5-addr-th2" class="canva-text">Index</th>
+          <th data-template-id="s5-addr-th3" class="canva-text">Offset</th>
+         </tr>
+         <tr>
+          <td data-template-id="s5-addr-r1c1" class="canva-text">5 bit</td>
+          <td data-template-id="s5-addr-r1c2" class="canva-text">3 bit</td>
+          <td data-template-id="s5-addr-r1c3" class="canva-text">2 bit</td>
+         </tr>
+        </tbody>
+       </table>
+      </div>
+      <h3 data-template-id="s5-fungsi-heading" class="canva-text font-bold mb-3">Fungsi Setiap Field</h3>
+      <ul class="list-disc list-inside space-y-2 opacity-80 text-sm">
+       <li data-template-id="s5-fungsi1" class="canva-text">Tag mengidentifikasi blok memori</li>
+       <li data-template-id="s5-fungsi2" class="canva-text">Index memilih baris cache</li>
+       <li data-template-id="s5-fungsi3" class="canva-text">Offset menunjuk byte dalam blok</li>
+      </ul>
+     </div>
+     <div class="glass p-5 md:p-8 reveal reveal-delay-3 card-accent">
+      <h3 data-template-id="s5-penting-heading" class="canva-text font-bold mb-4">Catatan Penting</h3>
+      <p data-template-id="s5-penting-text" class="canva-text text-sm opacity-80 leading-relaxed">Jika tag tidak cocok, cache harus memuat ulang blok dari memori utama. Konflik cache terjadi jika beberapa alamat ingin mengisi baris yang sama.</p>
+     </div>
+    </div>
+   </div>
+   <p data-template-id="s5-footer" class="canva-text absolute bottom-4 right-6 text-xs opacity-40 hidden md:block">Rincian fungsi dan struktur cache</p>
+  </section><!-- Section 6: Pembagian Address -->
+  <section class="section-full flex flex-col relative grid-bg" id="section-6">
+   <div class="glow-line absolute top-0 left-0 w-full"></div>
+   <div class="relative z-10 px-4 md:px-8 py-12 md:py-16 max-w-5xl mx-auto w-full">
+    <div class="section-badge mb-8 reveal">
+     <i data-lucide="split" class="icon-default"></i> <span data-template-id="s6-section-label" class="canva-text uppercase tracking-widest text-sm font-bold">Pembagian Address</span>
+    </div>
+    <h2 data-template-id="s6-title" class="canva-text heading-font font-bold mb-12 md:mb-16 reveal reveal-delay-1 text-2xl md:text-3xl">Pembagian Alamat Memori</h2>
+    <div class="grid md:grid-cols-2 gap-6 md:gap-12">
+     <div class="glass p-5 md:p-8 reveal reveal-delay-2 card-accent">
+      <h3 data-template-id="s6-struct-heading" class="canva-text font-bold mb-4"></h3>
+      <div class="overflow-x-auto">
+       <table class="text-xs md:text-sm">
+        <tbody>
+         <tr>
+          <th data-template-id="s6-th1" class="canva-text"></th>
+          <th data-template-id="s6-th2" class="canva-text"></th>
+          <th data-template-id="s6-th3" class="canva-text"></th>
+         </tr>
+         <tr>
+          <td data-template-id="s6-r1c1" class="canva-text"></td>
+          <td data-template-id="s6-r1c2" class="canva-text"></td>
+          <td data-template-id="s6-r1c3" class="canva-text"></td>
+         </tr>
+        </tbody>
+       </table>
+      </div>
+     </div>
+     <div class="glass p-5 md:p-8 reveal reveal-delay-3 card-accent">
+      <h3 data-template-id="s6-penjelasan-heading" class="canva-text font-bold mb-4"></h3>
+      <ul class="list-disc list-inside space-y-2 opacity-80 text-sm">
+       <li data-template-id="s6-p1" class="canva-text"></li>
+       <li data-template-id="s6-p2" class="canva-text"></li>
+       <li data-template-id="s6-p3" class="canva-text"></li>
+      </ul>
+     </div>
+    </div>
+   </div>
+     <div class="glow-line absolute top-0 left-0 w-full"></div>
+     <div class="relative z-10 px-4 md:px-8 py-12 md:py-16 max-w-5xl mx-auto w-full">
+      <div class="section-badge mb-8 reveal">
+        <span class="canva-text uppercase tracking-widest text-sm font-bold">Hasil Simulasi</span>
+      </div>
+    <div class="grid md:grid-cols-1 gap-6 md:gap-12">
+     <div class="glass p-5 md:p-8 reveal reveal-delay-2 card-accent">
+      <h3 data-template-id="" class="canva-text font-bold mb-4">OUTPUT PROGRAM</h3>
+      <div class="overflow-x-auto">
+       <table class="text-xs md:text-sm">
+        <tbody>
+         <tr>
+          <th data-template-id="" class="canva-text">Total Access</th>
+          <th data-template-id="" class="canva-text">Total Hit</th>
+          <th data-template-id="" class="canva-text">Total Miss</th>
+          <th data-template-id="" class="canva-text">Hit Rate</th>
+         </tr>
+         <tr>
+          <td data-template-id="" class="canva-text">12</td>
+          <td data-template-id="" class="canva-text">1</td>
+          <td data-template-id="" class="canva-text">11</td>
+          <td data-template-id="" class="canva-text">8.33%</td>
+         </tr>
+        </tbody>
+       </table>
+       </div>
+       </div>
+       </div>
+    </div>
+   </div>
+   <p data-template-id="s6-footer" class="canva-text absolute bottom-4 right-6 text-xs opacity-40 hidden md:block">Pembagian alamat untuk direct-mapped cache</p>
+  </section><!-- Section 7: Ekstraksi Bit -->
+  <section class="section-full flex flex-col relative grid-bg" id="section-7">
+   <div class="glow-line absolute top-0 left-0 w-full"></div>
+   <div class="orb w-44 h-44 bg-purple-500 top-40 right-40 delay-3"></div>
+   <div class="relative z-10 px-4 md:px-8 py-12 md:py-16 max-w-5xl mx-auto w-full">
+    <div class="section-badge mb-8 reveal">
+     <i data-lucide="binary" class="icon-default"></i> <span data-template-id="s7-section-label" class="canva-text uppercase tracking-widest text-sm font-bold">Ekstraksi Bit Alamat</span>
+    </div>
+    <h2 data-template-id="s7-title" class="canva-text heading-font font-bold mb-12 md:mb-16 reveal reveal-delay-1 text-2xl md:text-3xl">Ekstraksi Bit Alamat</h2>
+    <div class="grid md:grid-cols-2 gap-6 md:gap-12">
+     <div class="glass p-5 md:p-8 reveal reveal-delay-2">
+      <h3 data-template-id="s7-kode-heading" class="canva-text font-bold mb-4">Langkah Ekstraksi Bit</h3>
+      <div class="bg-black/40 border border-purple-500/30 rounded-lg p-3 md:p-4 mb-5 space-y-1">
+       <p data-template-id="s7-code1" class="canva-text mono-font text-xs opacity-90">andi $t3, $t2, 0x3</p>
+       <p data-template-id="s7-code2" class="canva-text mono-font text-xs opacity-90">srl $t4, $t2, 2</p>
+       <p data-template-id="s7-code3" class="canva-text mono-font text-xs opacity-90">andi $t4, $t4, 0x7</p>
+       <p data-template-id="s7-code4" class="canva-text mono-font text-xs opacity-90">srl $t5, $t2, 5</p>
+      </div>
+      <h3 data-template-id="s7-penjelasan-heading" class="canva-text font-bold mb-3">Penjelasan Proses</h3>
+      <ul class="list-disc list-inside space-y-2 opacity-80 text-sm">
+       <li data-template-id="s7-p1" class="canva-text">Gunakan AND dengan 0x3 untuk offset.</li>
+       <li data-template-id="s7-p2" class="canva-text">Geser kanan untuk menyiapkan index.</li>
+       <li data-template-id="s7-p3" class="canva-text">Gunakan AND untuk mendapatkan index.</li>
+       <li data-template-id="s7-p4" class="canva-text">Geser lagi untuk mendapatkan tag.</li>
+      </ul>
+     </div>
+     <div class="reveal reveal-delay-3 flex flex-col items-center justify-center gap-0 w-full">
+      <h3 data-template-id="s7-algo-heading" class="canva-text font-bold mb-6 md:mb-8 text-center w-full">Alur Ekstraksi Alamat</h3>
+      <div class="flow-box-refined w-full max-w-sm">
+       <span data-template-id="s7-flow1" class="canva-text text-xs md:text-sm">Ambil offset alamat rendah</span>
+      </div>
+      <div class="w-0.5 h-4 md:h-6 bg-gradient-to-b from-purple-400 to-transparent mx-auto"></div>
+      <div class="flow-box-refined w-full max-w-sm">
+       <span data-template-id="s7-flow2" class="canva-text text-xs md:text-sm">Hitung index cache</span>
+      </div>
+      <div class="w-0.5 h-4 md:h-6 bg-gradient-to-b from-purple-400 to-transparent mx-auto"></div>
+      <div class="flow-box-refined w-full max-w-sm">
+       <span data-template-id="s7-flow3" class="canva-text text-xs md:text-sm">Bandingkan tag</span>
+      </div>
+      <div class="w-0.5 h-4 md:h-6 bg-gradient-to-b from-purple-400 to-transparent mx-auto"></div>
+      <div class="flow-box-refined w-full max-w-sm">
+       <span data-template-id="s7-flow4" class="canva-text text-xs md:text-sm">Periksa valid bit</span>
+      </div>
+      <div class="w-0.5 h-4 md:h-6 bg-gradient-to-b from-purple-400 to-transparent mx-auto"></div>
+      <div class="flow-box-refined hit w-full max-w-sm">
+       <span data-template-id="s7-flow5" class="canva-text text-xs md:text-sm">Jika cocok, 1. pemeriksaan cache</span>
+      </div>
+      <div class="w-0.5 h-4 md:h-6 bg-gradient-to-b from-green-400 to-transparent mx-auto"></div>
+      <div class="flow-box-refined miss w-full max-w-sm">
+       <span data-template-id="s7-flow6" class="canva-text text-xs md:text-sm">Jika tidak cocok, cache miss</span>
+      </div>
+      <div class="w-0.5 h-4 md:h-6 bg-gradient-to-b from-red-400 to-transparent mx-auto"></div>
+      <div class="flow-box-refined w-full max-w-sm">
+       <span data-template-id="s7-flow7" class="canva-text text-xs md:text-sm">Perbarui cache jika perlu</span>
+      </div>
+     </div>
+    </div>
+   </div>
+   <p data-template-id="s7-footer" class="canva-text absolute bottom-4 right-6 text-xs opacity-40 hidden md:block">Proses ekstraksi bit alamat dalam cache</p>
+  </section><!-- Section 8: Logika Hit dan Miss -->
+  <section class="section-full flex flex-col relative grid-bg" id="section-8">
+   <div class="glow-line absolute top-0 left-0 w-full"></div>
+   <div class="relative z-10 px-4 md:px-8 py-12 md:py-16 max-w-5xl mx-auto w-full">
+    <div class="section-badge mb-8 reveal">
+     <i data-lucide="check-circle" class="icon-default"></i> <span data-template-id="s8-section-label" class="canva-text uppercase tracking-widest text-sm font-bold">Hit vs Miss</span>
+    </div>
+    <h2 data-template-id="s8-title" class="canva-text heading-font font-bold mb-12 md:mb-16 reveal reveal-delay-1 text-2xl md:text-3xl">Logika Hit dan Miss</h2>
+    <div class="grid md:grid-cols-3 gap-5 md:gap-8">
+     <div class="glass p-5 md:p-8 reveal reveal-delay-2 gradient-border card-accent flex flex-col">
+      <h3 data-template-id="s8-card1-title" class="canva-text font-bold text-sm m-0 mb-4">1. Pemeriksaan Cache</h3>
+      <div class="space-y-2">
+       <div class="bg-black/40 border border-cyan-500/30 rounded-lg p-3">
+        <p data-template-id="" class="canva-text mono-font text-xs opacity-90 m-0">bne $t8, $s1, cacheMiss</p>
+       </div>
+       <div class="bg-black/40 border border-cyan-500/30 rounded-lg p-3">
+        <p data-template-id="" class="canva-text mono-font text-xs opacity-90 m-0">bne $s0, $t5, cacheMiss</p>
+       </div>
+      </div>
+     </div>
+     <div class="glass p-5 md:p-8 reveal reveal-delay-3 gradient-border card-accent flex flex-col">
+      <h3 data-template-id="" class="canva-text font-bold text-sm m-0 mb-4">2. Update Cache Saat Miss</h3>
+      <div class="bg-black/40 border border-emerald-500/30 rounded-lg p-3 md:p-4 mb-3">
+       <p data-template-id="" class="canva-text mono-font text-xs opacity-90 m-0">sw $s3, 0($t7)</p>
+      </div>
+      <div class="bg-black/40 border border-emerald-500/30 rounded-lg p-3 md:p-4">
+       <p data-template-id="" class="canva-text mono-font text-xs opacity-90 m-0">sw $t5, 0($t9)</p>
+      </div>
+     </div>
+     <div class="glass p-5 md:p-8 reveal reveal-delay-4 gradient-border card-accent flex flex-col">
+      <h3 data-template-id="" class="canva-text font-bold text-sm m-0 mb-4"># Jika Terjadi Miss :</h3>
+      <div class="space-y-3 flex-1">
+       <div class="bg-black/40 border border-pink-500/30 rounded-lg p-3 md:p-4">
+        <p data-template-id="" class="canva-text text-xs opacity-90 m-0">a. Valid bit diaktifkan</p>
+       </div>
+       <div class="bg-black/40 border border-pink-500/30 rounded-lg p-3 md:p-4">
+        <p data-template-id="" class="canva-text text-xs opacity-90 m-0">b. Tag diperbarui</p>
+       </div>
+       <div class="bg-black/40 border border-pink-500/30 rounded-lg p-3 md:p-4">
+        <p data-template-id="" class="canva-text text-xs opacity-90 m-0">c. Data baru disimpan ke cache</p>
+       </div>
+      </div>
+     </div>
+    </div>
+   </div>
+   <p data-template-id="s8-footer" class="canva-text absolute bottom-4 right-6 text-xs opacity-40 hidden md:block">Ringkasan logika hit dan miss</p>
+  </section><!-- Section 9: Analisis Hasil Simulasi -->
+  <section class="section-full flex flex-col relative grid-bg" id="section-9">
+   <div class="glow-line absolute top-0 left-0 w-full"></div>
+   <div class="relative z-10 px-4 md:px-8 py-12 md:py-16 max-w-6xl mx-auto w-full">
+    <div class="section-badge mb-8 reveal">
+     <i data-lucide="bar-chart-2" class="icon-default"></i> <span data-template-id="s9-section-label" class="canva-text uppercase tracking-widest text-sm font-bold">Analisis Simulasi</span>
+    </div>
+    <h2 data-template-id="s9-title" class="canva-text heading-font font-bold mb-4 md:mb-6 reveal reveal-delay-1 text-2xl md:text-3xl">Analisis Hasil Simulasi</h2>
+    <p data-template-id="s9-subtitle" class="canva-text text-base md:text-lg uppercase tracking-widest mb-10 md:mb-12 reveal reveal-delay-1 opacity-80 font-semibold\">Tiga Jenis Miss pada Cache</p>
+    <div class="grid md:grid-cols-3 gap-6 md:gap-10 mb-8 md:mb-10 reveal reveal-delay-2">
+     <div class="glass p-6 md:p-8 gradient-border card-accent flex flex-col items-center text-center">
+      <i data-lucide="circle" class="icon-circle-purple"></i>
+      <h3 data-template-id="s9-miss1-title" class="canva-text font-bold mb-4 text-base md:text-lg">COMPULSORY MISS</h3>
+      <p data-template-id="" class="canva-text text-sm md:text-base opacity-85 leading-relaxed">Terjadi saat data pertama kali diakses karena cache masih kosong.</p>
+     </div>
+     <div class="glass p-6 md:p-8 gradient-border card-accent flex flex-col items-center text-center">
+      <i data-lucide="circle" class="icon-circle-cyan"></i>
+      <h3 data-template-id="s9-miss2-title" class="canva-text font-bold mb-4 text-base md:text-lg">CONFLICT MISS</h3>
+      <p data-template-id="" class="canva-text text-sm md:text-base opacity-85 leading-relaxed">Terjadi karena beberapa address memiliki index yang sama sehingga saling menggantikan pada line cache yang sama. </p>
+      <p data-template-id="" class="canva-text text-sm md:text-base opacity-85 leading-relaxed"></p>
+     </div>
+     <div class="glass p-6 md:p-8 gradient-border card-accent flex flex-col items-center text-center">
+      <i data-lucide="circle" class="icon-circle-pink"></i>
+      <h3 data-template-id="s9-miss3-title" class="canva-text font-bold mb-4 text-base md:text-lg">CAPACITY MISS</h3>
+      <p data-template-id="" class="canva-text text-sm md:text-base opacity-85 leading-relaxed">Tidak terlalu dominan karena jumlah data masih berada dalam kapasitas cache.</p>
+     </div>
+    </div>
+    <div class="glass p-6 md:p-8 reveal reveal-delay-3 card-accent">
+     <h3 data-template-id="s9-analysis-heading" class="canva-text font-bold mb-4 text-base md:text-lg">Kesimpulan Simulasi</h3>
+     <p data-template-id="" class="canva-text text-base md:text-lg opacity-85 leading-relaxed">Pola address yang sering menggunakan index sama menyebabkan data lama terus tergantikan. Akibatnya conflict miss meningkat dan hit rate menjadi rendah. Pada simulasi ini hanya terdapat 1 hit dan 11 miss sehingga hit rate hanya sekitar 8%.</p>
+    </div>
+   </div>
+   <p data-template-id="s9-footer" class="canva-text absolute bottom-4 right-6 text-xs opacity-40 hidden md:block">Hasil evaluasi performa cache</p>
+  </section><!-- Section 10: Penutup -->
+  <section class="section-full flex flex-col relative grid-bg" id="section-10">
+   <div class="glow-line absolute top-0 left-0 w-full"></div>
+   <div class="orb w-52 h-52 bg-cyan-600 top-20 left-40 delay-8"></div>
+   <div class="relative z-10 px-4 md:px-8 py-12 md:py-16 max-w-5xl mx-auto w-full">
+    <div class="section-badge mb-8 reveal">
+     <i data-lucide="message-circle" class="icon-default"></i> <span data-template-id="s10-section-label" class="canva-text uppercase tracking-widest text-sm font-bold">Penutup</span>
+    </div>
+    <h2 data-template-id="s10-title" class="canva-text heading-font font-bold mb-12 md:mb-16 reveal reveal-delay-1 text-2xl md:text-3xl">Simpulan Presentasi</h2>
+    <div class="grid md:grid-cols-3 gap-6 md:gap-10">
+     <div class="glass p-6 md:p-8 reveal reveal-delay-2 card-accent">
+      <h3 data-template-id="" class="canva-text font-bold mb-4 text-base md:text-lg">JAWABAN PERTANYAAN (d)</h3>
+      <p data-template-id="" class="canva-text text-base md:text-lg opacity-85 mb-4">"Jika jumlah cache line ditingkatkan dari 8 menjadi 16, maka jumlah index menjadi 4 bit."</p>
+      <ul class="list-disc list-inside space-y-2 opacity-85 text-sm md:text-base">
+       <li data-template-id="" class="canva-text">a. Collision antar address berkurang,</li>
+       <li data-template-id="" class="canva-text">b. Conflict miss menurun</li>
+       <li data-template-id="" class="canva-text">b. hit rate meningkat</li>
+      </ul>
+      <p data-template-id="" class="canva-text text-base md:text-lg opacity-85 mt-4">Hal ini terjadi karena lebih banyak data dapat disimpan tanpa saling menggantikan.</p>
+     </div>
+     <div class="glass p-6 md:p-8 reveal reveal-delay-3 card-accent">
+      <h3 data-template-id="" class="canva-text font-bold mb-4 text-base md:text-lg">Kesimpulan :</h3>
+      <p data-template-id="" class="canva-text text-base md:text-lg opacity-85 leading-relaxed">DIRECT-MAPPED CACHE SEDERHANA DAN CEPAT, TETAPI RENTAN TERHADAP CONFLICT MISS.</p>
+     </div>
+     <div class="glass p-6 md:p-8 reveal reveal-delay-4 card-accent">
+      <h3 data-template-id="" class="canva-text font-bold mb-4 text-base md:text-lg"> JAWABAN PERTANYAAN (e)</h3>
+      <p data-template-id="" class="canva-text text-base md:text-lg opacity-85 mb-4">Simulator membantu memahami: </p>
+      <ul class="list-disc list-inside space-y-2 opacity-85 text-sm md:text-base">
+       <li data-template-id="" class="canva-text">a. Cara kerja cache</li>
+       <li data-template-id="" class="canva-text">b. Proses hit dan miss</li>
+       <li data-template-id="" class="canva-text">c. Operasi bitwise,</li>
+       <li data-template-id="" class="canva-text">d. Pengaruh pola address terhadap performa.</li>
+      </ul>
+      <p data-template-id="" class="canva-text text-sm opacity-80 mt-3">Simulator juga membantu memvisualisasikan konsep hierarki memori pada prosesor modern.</p>
+     </div>
+    </div>
+   </div>
+   <p data-template-id="s10-footer" class="canva-text absolute bottom-4 right-6 text-xs opacity-40 hidden md:block">Penutup presentasi cache</p>
+  </section><!-- Section 11: Thank You -->
+  <section class="section-full flex flex-col items-center justify-center relative grid-bg px-4" id="section-11">
+   <div class="glow-line absolute top-0 left-0 w-full"></div>
+   <div class="orb w-48 md:w-72 h-48 md:h-72 bg-purple-700 top-1/4 left-1/4 delay-5"></div>
+   <div class="orb w-32 md:w-48 h-32 md:h-48 bg-pink-600 bottom-1/4 right-1/4 delay-9"></div>
+   <div class="relative z-10 text-center reveal">
+    <div class="glass-strong px-12 md:px-20 py-16 md:py-24">
+     <h2 data-template-id="s11-title" class="canva-text heading-font mb-6 md:mb-8 text-5xl md:text-6xl font-black tracking-tight">Terima Kasih</h2>
+     <p data-template-id="s11-subtitle" class="canva-text opacity-80 text-lg md:text-2xl font-semibold tracking-wide">Presentasi selesai</p>
+    </div>
+   </div>
+   <p data-template-id="s11-footer" class="canva-text absolute bottom-4 right-6 text-xs opacity-40 hidden md:block">Semoga bermanfaat</p>
+  </section><!-- Navigation -->
+  <nav class="nav-container" aria-label="Section navigation">
+   <div class="nav-item active" data-section="1" title="Slide 1: Sampul">
+    <span class="nav-label">Slide 1: Sampul</span>
+   </div>
+   <div class="nav-item" data-section="2" title="Slide 2: Kode Sumber MIPS">
+    <span class="nav-label">Slide 2: Kode Sumber MIPS</span>
+   </div>
+   <div class="nav-item" data-section="3" title="Slide 3: Latar Belakang & Tujuan">
+    <span class="nav-label">Slide 3: Latar Belakang & Tujuan</span>
+   </div>
+   <div class="nav-item" data-section="4" title="Slide 4: Konfigurasi Cache">
+    <span class="nav-label">Slide 4: Konfigurasi Cache</span>
+   </div>
+   <div class="nav-item" data-section="5" title="Slide 5: Arsitektur Direct-Mapped Cache">
+    <span class="nav-label">Slide 5: Arsitektur Direct-Mapped Cache</span>
+   </div>
+   <div class="nav-item" data-section="6" title="Slide 6: Pembagian Address & Hasil Simulasi">
+    <span class="nav-label">Slide 6: Pembagian Address & Hasil Simulasi</span>
+   </div>
+   <div class="nav-item" data-section="7" title="Slide 7: Ekstraksi Bit">
+    <span class="nav-label">Slide 7: Ekstraksi Bit</span>
+   </div>
+   <div class="nav-item" data-section="8" title="Slide 8: Logika Hit dan Miss">
+    <span class="nav-label">Slide 8: Logika Hit dan Miss</span>
+   </div>
+   <div class="nav-item" data-section="9" title="Slide 9: Analisis Hasil Simulasi">
+    <span class="nav-label">Slide 9: Analisis Hasil Simulasi</span>
+   </div>
+   <div class="nav-item" data-section="10" title="Slide 10: Simpulan Presentasi">
+    <span class="nav-label">Slide 10: Simpulan Presentasi</span>
+   </div>
+   <div class="nav-item" data-section="11" title="Slide 11: Terima Kasih">
+    <span class="nav-label">Slide 11: Terima Kasih</span>
+   </div>
+  </nav>
+  <script src="/_sdk/editing_sdk.js"></script>
+  <script>
+    lucide.createIcons();
+
+    const mipsCode = `.data\n\naddresses:\n    .word 0x00000000\n    .word 0x00000004\n    .word 0x00000008\n    .word 0x0000000C\n    .word 0x00000010\n    .word 0x00000014\n    .word 0x00000018\n    .word 0x0000001C\n    .word 0x00000000\n    .word 0x00000020\n    .word 0x00000000\n    .word 0x00000020\n\nvalidBits:\n    .word 0:8\n\ntagArray:\n    .word 0:8\n\ntotalAccess: .word 12\nhitCount:    .word 0\nmissCount:   .word 0\n\nmsgHit:      .asciiz "-> HIT\\n"\nmsgMiss:     .asciiz "-> MISS\\n"\nmsgTotal:    .asciiz "\\nTotal Access : "\nmsgHitTotal: .asciiz "\\nTotal Hit    : "\nmsgMissTotal:.asciiz "\\nTotal Miss   : "\nmsgRate:     .asciiz "\\nHit Rate (%) : "\n\n.text\n.globl main\n\nmain:\n    li $t0, 0\n    la $t1, addresses\n\nloop:\n    beq $t0, 12, finish\n    lw $t2, 0($t1)\n    andi $t3, $t2, 0x3\n    srl $t4, $t2, 2\n    andi $t4, $t4, 0x7\n    srl $t5, $t2, 5\n    sll $t6, $t4, 2\n    la $t7, validBits\n    add $t7, $t7, $t6\n    lw $t8, 0($t7)\n    la $t9, tagArray\n    add $t9, $t9, $t6\n    lw $s0, 0($t9)\n    li $s1, 1\n    bne $t8, $s1, cacheMiss\n    bne $s0, $t5, cacheMiss\n\ncacheHit:\n    lw $s2, hitCount\n    addi $s2, $s2, 1\n    sw $s2, hitCount\n    li $v0, 4\n    la $a0, msgHit\n    syscall\n    j nextLoop\n\ncacheMiss:\n    lw $s2, missCount\n    addi $s2, $s2, 1\n    sw $s2, missCount\n    li $s3, 1\n    sw $s3, 0($t7)\n    sw $t5, 0($t9)\n    li $v0, 4\n    la $a0, msgMiss\n    syscall\n\nnextLoop:\n    addi $t1, $t1, 4\n    addi $t0, $t0, 1\n    j loop\n\nfinish:\n    li $v0, 4\n    la $a0, msgTotal\n    syscall\n    li $v0, 1\n    lw $a0, totalAccess\n    syscall\n    li $v0, 4\n    la $a0, msgHitTotal\n    syscall\n    li $v0, 1\n    lw $a0, hitCount\n    syscall\n    li $v0, 4\n    la $a0, msgMissTotal\n    syscall\n    li $v0, 1\n    lw $a0, missCount\n    syscall\n    lw $t0, hitCount\n    li $t1, 100\n    mult $t0, $t1\n    mflo $t2\n    lw $t3, totalAccess\n    div $t2, $t3\n    mflo $t4\n    li $v0, 4\n    la $a0, msgRate\n    syscall\n    li $v0, 1\n    move $a0, $t4\n    syscall\n    li $v0, 10\n    syscall`;
+
+    function highlightMips(code) {
+      return code.split('\n').map(line => {
+        line = line.replace(/"[^"]*"/g, m => `<span class="string">${m}</span>`);
+        line = line.replace(/\.(data|text|word|asciiz|globl)/g, m => `<span class="directive">${m}</span>`);
+        line = line.replace(/^(\w+):/gm, (m, lbl) => `<span class="label">${lbl}</span>:`);
+        line = line.replace(/0x[0-9A-Fa-f]+/g, m => `<span class="number">${m}</span>`);
+        line = line.replace(/\b(\d+)\b/g, m => `<span class="number">${m}</span>`);
+        line = line.replace(/\$[a-z0-9]+/g, m => `<span class="register">${m}</span>`);
+        line = line.replace(/\b(li|la|lw|sw|beq|bne|andi|srl|sll|add|addi|mult|div|mflo|move|syscall|j)\b/g, m => `<span class="instruction">${m}</span>`);
+        return line;
+      }).join('\n');
+    }
+
+    document.getElementById('code-display').innerHTML = '<pre class="code-display-pre">' + highlightMips(mipsCode) + '</pre>';
+
+    const extractionCode = [
+      'andi $t3, $t2, 0x3',
+      'srl $t4, $t2, 2',
+      'andi $t4, $t4, 0x7',
+      'srl $t5, $t2, 5'
+    ];
+
+    extractionCode.forEach((line, index) => {
+      const el = document.querySelector(`[data-template-id="s7-code${index + 1}"]`);
+      if (el) el.textContent = line;
+    });
+
+    const defaults = [
+      {id:'s1-title', text:'SIMULATOR CACHE DENGAN PEMETAAN LANGSUNG (DIRECT-MAPPED CACHE)'},
+      {id:'s1-subtitle', text:'SIMULASI DIRECT-MAPPED CACHE MENGGUNAKAN ASSEMBLY MIPS'},
+      {id:'s1-team-heading', text:'Anggota Kelompok :'},
+      {id:'s1-member1', text:'Andreas Wahyu Prasetya (2025520008)'},
+      {id:'s1-member2', text:'Markwell Giral Airlangga (2025520010)'},
+      {id:'s1-member3', text:'Nicholas Clementius Suwanto (2025520002)'},
+      {id:'s1-member4', text:'Giselle Amadea Ivory (2025520005)'},
+      {id:'s1-member5', text:'Reza Wijaya (20255520004)'},
+      {id:'s1-member6', text:'Renaldi Pasapan (20255520009)'},
+      {id:'s1-footer', text:'SIMULATOR CACHE - DIRECT-MAPPED'},
+      {id:'s2-section-label', text:'Kode Sumber MIPS'},
+      {id:'s2-title', text:'Contoh Kode MIPS Cache'},
+      {id:'s2-footer', text:'Source-Code simulasi cache dalam assembly MIPS'},
+      {id:'s3-section-label', text:'Latar Belakang & Tujuan'},
+      {id:'s3-heading1', text:'Latar Belakang'},
+      {id:'s3-para1', text:'CPU lebih cepat dibanding RAM sehingga diperlukan cache untuk mempercepat akses data. Pada simulasi ini digunakan direct-mapped cache dengan 8 line dan block size 4 byte.'},
+      {id:'s3-heading2', text:'Pertanyaan Pembahasan'},
+      {id:'s3-q1', text:'Bagaimana arsitektur direct-mapped cache bekerja?'},
+      {id:'s3-q2', text:'Bagaimana proses pemisahan tag, index, dan offset dilakukan?'},
+      {id:'s3-q3', text:'Bagaimana logika penentuan hit dan miss pada cache?'},
+      {id:'s3-q4', text:'Apa penyebab compulsory miss dan conflict miss?'},
+      {id:'s3-q5', text:'Bagaimana pengaruh penambahan jumlah cache line terhadap hit rate?'},
+      {id:'s3-q6', text:'Bagaimana simulator membantu memahami hierarki memori modern?'},
+      {id:'s3-heading3', text:'Tujuan'},
+      {id:'s3-t1', text:'Memahami cara kerja cache'},
+      {id:'s3-t2', text:'Memahami hit dan miss'},
+      {id:'s3-t3', text:'Menggunakan operasi bitwise pada assembly'},
+      {id:'s3-t4', text:'Menghitung hit rate cache'},
+      {id:'s3-footer', text:'SIMULATOR CACHE - DIRECT-MAPPED'},
+      {id:'s4-section-label', text:'Konfigurasi Cache'},
+      {id:'s4-title', text:'Spesifikasi Cache'},
+      {id:'s4-spec-heading', text:'Komponen Cache'},
+      {id:'s4-r1c1', text:'Jenis Cache'},
+      {id:'s4-r1c2', text:'Direct-Mapped'},
+      {id:'s4-r2c1', text:'Jumlah Line'},
+      {id:'s4-r2c2', text:'8'},
+      {id:'s4-r3c1', text:'Block Size'},
+      {id:'s4-r3c2', text:'4 byte'},
+      {id:'s4-r4c1', text:'Address'},
+      {id:'s4-r4c2', text:'32-bit'},
+      {id:'s4-r5c1', text:'Write Policy'},
+      {id:'s4-r5c2', text:'Write-through'},
+      {id:'s4-struct-heading', text:'Struktur Cache'},
+      {id:'s4-struct-desc', text:'Setiap line menyimpan:'},
+      {id:'s4-struct-a', text:'a. Valid Bit'},
+      {id:'s4-struct-b', text:'b. Tag'},
+      {id:'s4-penjelasan-heading', text:'# PENJELASAN :'},
+      {id:'s4-penjelasan-text', text:'PADA DIRECT-MAPPED CACHE, SETIAP BLOK MEMORI UTAMA HANYA DAPAT DITEMPATKAN PADA SATU LINE CACHE TERTENTU. KARENA JUMLAH CACHE LINE HANYA 8, MAKA KEMUNGKINAN BEBERAPA ADDRESS MEMAKAI LINE YANG SAMA CUKUP BESAR SEHINGGA DAPAT MENYEBABKAN CONFLICT MISS.'},
+      {id:'s4-footer', text:'SIMULATOR CACHE - DIRECT-MAPPED'},
+      {id:'s5-section-label', text:'Arsitektur Direct-Mapped Cache'},
+      {id:'s5-title', text:'Arsitektur Direct-Mapped Cache'},
+      {id:'s5-jawaban-heading', text:'Jawaban Pertanyaan (a)'},
+      {id:'s5-jawaban-text', text:'Pada direct-mapped cache, setiap address memori hanya dapat masuk ke satu line cache tertentu. Address 32-bit dibagi menjadi:'},
+      {id:'s5-address-struct', text:'Tag | Index | Offset'},
+      {id:'s5-addr-th1', text:'Tag'},
+      {id:'s5-addr-th2', text:'Index'},
+      {id:'s5-addr-th3', text:'Offset'},
+      {id:'s5-addr-r1c1', text:'27 bit'},
+      {id:'s5-addr-r1c2', text:'3 bit'},
+      {id:'s5-addr-r1c3', text:'2 bit'},
+      {id:'s5-fungsi-heading', text:'FUNGSI :'},
+      {id:'s5-fungsi1', text:'OFFSET → MENENTUKAN POSISI BYTE DALAM BLOCK'},
+      {id:'s5-fungsi2', text:'INDEX → MENENTUKAN LINE CACHE'},
+      {id:'s5-fungsi3', text:'TAG → IDENTITAS DATA'},
+      {id:'s5-penting-heading', text:'MENGAPA PENTING ?'},
+      {id:'s5-penting-text', text:'Pemisahan bit sangat penting dalam perangkat keras karena memungkinkan cache bekerja secara cepat dan efisien. Hardware dapat langsung menuju line cache menggunakan index tanpa harus mencari seluruh isi cache. Kemudian tag digunakan untuk memverifikasi apakah data yang tersimpan sesuai dengan address yang diminta CPU. Pemisahan ini membuat proses pencarian data dapat dilakukan hampir secara instan.'},
+      {id:'s5-footer', text:'SIMULATOR CACHE - DIRECT-MAPPED'},
+      {id:'s6-section-label', text:'Pembagian Address & Hasil Simulasi'},
+      {id:'s6-title', text:'Pembagian Address & Hasil Simulasi'},
+      {id:'s6-struct-heading', text:'Struktur Address 32-bit :'},
+      {id:'s6-th1', text:'Tag'},
+      {id:'s6-th2', text:'Index'},
+      {id:'s6-th3', text:'Offset'},
+      {id:'s6-r1c1', text:'27 bit'},
+      {id:'s6-r1c2', text:'3 bit'},
+      {id:'s6-r1c3', text:'2 bit'},
+      {id:'s6-penjelasan-heading', text:'Penjelasan :'},
+      {id:'s6-p1', text:'Offset → posisi byte dalam block'},
+      {id:'s6-p2', text:'Index → menentukan line cache'},
+      {id:'s6-p3', text:'Tag → identitas data'},
+      {id:'s6-footer', text:'SIMULATOR CACHE - DIRECT-MAPPED'},
+      {id:'s7-section-label', text:'Ekstraksi Bit'},
+      {id:'s7-title', text:'Ekstraksi Bit'},
+      {id:'s7-kode-heading', text:'Jawaban Pertanyaan (b)'},
+      {id:'s7-penjelasan-heading', text:'PENJELASAN KODE :'},
+      {id:'s7-p1', text:'andi digunakan untuk mengambil offset.'},
+      {id:'s7-p2', text:'srl digunakan untuk shift right logical.'},
+      {id:'s7-p3', text:'masking 0x7 digunakan untuk mengambil 3 bit index.'},
+      {id:'s7-p4', text:'shift 5 bit digunakan untuk mengambil tag.'},
+      {id:'s7-algo-heading', text:'ALGORITMA'},
+      {id:'s7-flow1', text:'Ambil address'},
+      {id:'s7-flow2', text:'Pisahkan tag, index, offset'},
+      {id:'s7-flow3', text:'Cek valid bit'},
+      {id:'s7-flow4', text:'Bandingkan tag'},
+      {id:'s7-flow5', text:'Jika cocok maka HIT'},
+      {id:'s7-flow6', text:'Jika berbeda maka MISS'},
+      {id:'s7-flow7', text:'Update cache saat miss'},
+      {id:'s7-footer', text:'SIMULATOR CACHE - DIRECT-MAPPED'},
+      {id:'s8-section-label', text:'Logika Hit dan Miss'},
+      {id:'s8-title', text:'Logika Hit dan Miss'},
+      {id:'s8-card1-title', text:'1. Pemeriksaan Cache'},
+      {id:'s8-card1-line1', text:'Data ditemukan di cache'},
+      {id:'s8-card1-line2', text:'Akses memori lebih cepat'},
+      {id:'s8-card2-title', text:'Cache Update'},
+      {id:'s8-card2-line1', text:'Valid bit diatur setelah miss'},
+      {id:'s8-card2-line2', text:'Tag baru disimpan'},
+      {id:'s8-card3-title', text:'Cache Miss'},
+      {id:'s8-card3-line1', text:'Tag tidak sesuai atau invalid'},
+      {id:'s8-card3-line2', text:'Baris cache dimuat ulang'},
+      {id:'s8-footer', text:'SIMULATOR CACHE - DIRECT-MAPPED'},
+      {id:'s9-section-label', text:'Analisis Simulasi'},
+      {id:'s9-title', text:'Analisis Hasil Simulasi'},
+      {id:'s9-subtitle', text:'Tiga Jenis Miss pada Cache'},
+      {id:'s9-miss1-title', text:'COMPULSORY MISS'},
+      {id:'s9-miss1-desc', text:'Akses ulang data yang sama meningkatkan peluang hit.'},
+      {id:'s9-miss2-title', text:'CONFLICT MISS'},
+      {id:'s9-miss2-desc', text:'Akses data berdekatan memperbaiki performa cache.'},
+      {id:'s9-miss3-title', text:'CAPACITY MISS'},
+      {id:'s9-miss3-desc', text:'CAPACITY MISS cenderung meningkatkan miss rate.'},
+      {id:'s9-analysis-heading', text:'Kesimpulan Simulasi'},
+      {id:'s9-analysis-text', text:'Cache dapat mengurangi latency memori yang terlihat ketika pola akses berulang terjadi. Semakin banyak hit, semakin tinggi efisiensi cache.'},
+      {id:'s9-footer', text:'SIMULATOR CACHE - DIRECT-MAPPED'},
+      {id:'s10-section-label', text:'Penutup'},
+      {id:'s10-title', text:'Simpulan Presentasi'},
+      {id:'s10-q1-heading', text:'Pertanyaan Kunci'},
+      {id:'s10-q1-text', text:'Apa keuntungan utama direct-mapped cache?'},
+      {id:'s10-q1-item1', text:'Sederhana dan cepat'},
+      {id:'s10-q1-item2', text:'Implementasi hardware mudah'},
+      {id:'s10-q1-item3', text:'Cocok untuk akses lokal'},
+      {id:'s10-q1-extra', text:'Pertimbangkan konflik cache sebagai batasannya.'},
+      {id:'s10-kesimpulan-heading', text:'Kesimpulan Akhir'},
+      {id:'s10-kesimpulan-text', text:'Cache direct-mapped menawarkan akses cepat tetapi rentan terhadap konflik. Desain yang baik dan analisis pola akses membantu memaksimalkan hit rate.'},
+      {id:'s10-q2-heading', text:'Rekomendasi'},
+      {id:'s10-q2-text', text:'Gunakan cache dan analisis pola akses untuk optimasi performa.'},
+      {id:'s10-q2-item1', text:'Optimalkan program untuk locality'},
+      {id:'s10-q2-item2', text:'Monitor cache behavior'},
+      {id:'s10-q2-item3', text:'Lakukan profiling rutin'},
+      {id:'s10-q2-item4', text:'Analisis pola akses'},
+      {id:'s10-q2-extra', text:'Cache optimization adalah kunci performa sistem modern.'},
+      {id:'s10-footer', text:'SIMULATOR CACHE - DIRECT-MAPPED'},
+      {id:'s11-title', text:'THANK U'},
+      {id:'s11-subtitle', text:'ANY QUESTIONS & DISCUSSION'},
+      {id:'s11-footer', text:'SIMULATOR CACHE - DIRECT-MAPPED'}
+    ];
+    defaults.forEach(item => {
+      const el = document.querySelector(`[data-template-id="${item.id}"]`);
+      if (el) el.textContent = item.text;
+    });
+
+    const observer = new IntersectionObserver((entries) => {
+      entries.forEach(entry => {
+        if (entry.isIntersecting) entry.target.classList.add('visible');
+      });
+    }, { threshold: 0.1 });
+    document.querySelectorAll('.reveal').forEach(el => observer.observe(el));
+
+    const navItems = document.querySelectorAll('.nav-item');
+    const sections = document.querySelectorAll('section');
+
+    const setActiveNav = (sectionId) => {
+      navItems.forEach(item => item.classList.toggle('active', item.dataset.section === sectionId));
+    };
+
+    navItems.forEach(item => {
+      item.addEventListener('click', () => {
+        document.getElementById('section-' + item.dataset.section).scrollIntoView({ behavior: 'smooth' });
+      });
+    });
+
+    const sectionObserver = new IntersectionObserver((entries) => {
+      entries.forEach(entry => {
+        if (entry.isIntersecting) {
+          const sectionId = entry.target.id.split('-')[1];
+          setActiveNav(sectionId);
+        }
+      });
+    }, { threshold: 0.35, rootMargin: '-40% 0px -40% 0px' });
+
+    sections.forEach(section => sectionObserver.observe(section));
+
+    window.addEventListener('scroll', () => {
+      const offset = window.scrollY + window.innerHeight * 0.5;
+      let current = sections[0]?.id?.split('-')[1] || '1';
+      sections.forEach(section => {
+        if (section.offsetTop <= offset) {
+          current = section.id.split('-')[1];
+        }
+      });
+      setActiveNav(current);
+    });
+
+    document.addEventListener('keydown', (e) => {
+      const currentActive = document.querySelector('.nav-item.active');
+      if (!currentActive) return;
+      let next = null;
+      const n = parseInt(currentActive.dataset.section, 10);
+      if ((e.key === 'ArrowRight' || e.key === 'ArrowDown') && n < sections.length) next = n + 1;
+      else if ((e.key === 'ArrowLeft' || e.key === 'ArrowUp') && n > 1) next = n - 1;
+      if (next) {
+        e.preventDefault();
+        document.getElementById('section-' + next).scrollIntoView({ behavior: 'smooth' });
+      }
+    });
+  </script></body>
+</html>
